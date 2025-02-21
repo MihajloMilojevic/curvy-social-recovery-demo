@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import styles from './split.module.css';
 import Share from "./Share"
+import sharesToCSV from '../../utils/sharesToCSV';
+import downloadFile from '../../utils/download';
+import sharesToZip from '../../utils/sharesToZip';
 
 export default function Split() {
     const [shares, setShares] = useState(Array(5).fill({
@@ -26,6 +29,25 @@ export default function Split() {
     const handleSubmit = (e) => {
         e.preventDefault();
         console.log(formData);
+    }
+
+    function exportCSV() {
+        const file = sharesToCSV(shares);
+        const url = URL.createObjectURL(file);
+        downloadFile(url, 'shares.csv');
+        URL.revokeObjectURL(url); // Clean up the URL object
+    }
+
+    async function exportZIP() {
+        try {
+            const file = await sharesToZip(shares);
+            const url = URL.createObjectURL(file);
+            downloadFile(url, 'shares.zip');
+            URL.revokeObjectURL(url); // Clean up the URL object
+        } catch (error) {
+            console.error(error);
+            alert('An error occurred while exporting the ZIP file');
+        }
     }
 
     return (
@@ -60,14 +82,14 @@ export default function Split() {
                         <div className={styles.shares_info}>
                             <h3>Shares: </h3>
                             <div className={styles.buttons_container}>
-                                <button type="button">Export CSV</button>
-                                <button type="button">Export ZIP</button>
+                                <button type="button" onClick={exportCSV}>Export CSV</button>
+                                <button type="button" onClick={exportZIP}>Export ZIP</button>
                             </div>
                         </div>
                         <div>
                             {
                                 shares.map((share, index) => (
-                                    <Share key={index} share={share} />
+                                    <Share key={index} share={share} index={index}/>
                                 ))
                             }
                         </div>
