@@ -4,14 +4,14 @@ import Share from "./Share"
 import sharesToCSV from '../../utils/sharesToCSV';
 import downloadFile from '../../utils/download';
 import sharesToZip from '../../utils/sharesToZip';
+import upload from '../../utils/upload';
+import parseSplitDataFile from '../../utils/parseSplitDataFile';
+import { useDemoContext } from '../../context/demoContext';
 
 export default function Split() {
-    const [shares, setShares] = useState(Array(5).fill({
-        id: 0,
-        spendingKey:    'd3a5d55fe7f4c66bd386b7f06d371ef7834b2f46bda5c3aa2ca9d94af588aa07',
-        viewingKey:     '02ca73421efadad1c52bdd3c29df9a67afc180bcd106a5faf10ed5c87cf110c4',
-        share:          'fe7f4c66bd386b7f06d371ef79a67afc180bcd106a5faf2ca73421e4af588a10'
-    }));
+    
+    const {splitShares: shares, setSplitShares: setShares, moveShareToRecovery} = useDemoContext();
+
     const [formData, setFormData] = useState({
         spendingKey: '',
         viewingKey: '',
@@ -28,7 +28,6 @@ export default function Split() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log(formData);
     }
 
     function exportCSV() {
@@ -47,6 +46,17 @@ export default function Split() {
         } catch (error) {
             console.error(error);
             alert('An error occurred while exporting the ZIP file');
+        }
+    }
+
+    async function importData() {
+        try {
+            const file = await upload();
+            const data = await parseSplitDataFile(file.file, file.name);
+            setFormData({...formData, ...data});
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
         }
     }
 
@@ -72,7 +82,7 @@ export default function Split() {
                 </div>
                 <div className={styles.buttons_container}>
                     <button type="button">Generate Random</button>
-                    <button type="button">Import Data</button>
+                    <button type="button" onClick={importData}>Import Data</button>
                     <button type="submit">Generate Shares</button>
                 </div>
             </form>
@@ -89,7 +99,12 @@ export default function Split() {
                         <div>
                             {
                                 shares.map((share, index) => (
-                                    <Share key={index} share={share} index={index}/>
+                                    <Share 
+                                        key={index} 
+                                        share={share} 
+                                        index={index}
+                                        onMove={() => moveShareToRecovery(index)}
+                                    />
                                 ))
                             }
                         </div>

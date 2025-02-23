@@ -2,7 +2,7 @@ import downloadFile from '../../utils/download';
 import shareToTxt from '../../utils/shareToTxt';
 import styles from './share.module.css';
 
-export default function Share({share, index}) {
+export default function Share({share, index, onMove}) {
 
     function downloadTxt() {
         const file = shareToTxt(share, index);
@@ -28,7 +28,7 @@ export default function Share({share, index}) {
             </div>
             <div className={styles.buttons_container}>
                 <button type="button" onClick={downloadTxt}>Download .txt</button>
-                <button type="button">Add to recovery</button>
+                <button type="button" onClick={onMove}>Add to recovery</button>
             </div>
         </div>
     )
