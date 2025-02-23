@@ -1,10 +1,17 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
+import {defaultWasmModule, loadWasm} from '../wasm';
 
 const DemoContext = createContext();
 
 const DemoProvider = ({ children }) => {
+    const [wasm, setWasm] = useState(defaultWasmModule)
     const [splitShares, setSplitShares] = useState([]);
     const [recoverShares, setRecoverShares] = useState([]);
+
+
+    useEffect(() => {
+        loadWasm(wasm, setWasm);
+    }, []);
 
     const moveShareToRecovery = (index) => {
         setRecoverShares([...recoverShares, splitShares[index]]);
@@ -17,14 +24,15 @@ const DemoProvider = ({ children }) => {
     }
     
     const addEmpryShare = () => {
-        setRecoverShares([...recoverShares, {share: '', spendingKey: '', viewingKey: ''}]);
+        setRecoverShares([{share: '', spendingKey: '', viewingKey: ''}, ...recoverShares]);
     }
     return (
         <DemoContext.Provider value={{ 
             splitShares, setSplitShares, 
             recoverShares, setRecoverShares, 
             moveShareToRecovery, removeShareFromRecovery,
-            addEmpryShare
+            addEmpryShare,
+            wasm
         }}>
             {children}
         </DemoContext.Provider>

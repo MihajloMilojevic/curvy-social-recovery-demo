@@ -18,9 +18,9 @@ export default async function csvToShares(blob) {
     });
     return csvData.map(row => {
         return {
-            spendingKey: row.X,
-            viewingKey: row.SK,
-            share: row.VK
+            spendingKey: row.SK,
+            viewingKey: row.VK,
+            share: row.X
         };
     });
 }

@@ -5,6 +5,7 @@ import upload from '../../utils/upload';
 import csvToShares from '../../utils/csvToShares';
 import zipToShares from '../../utils/zipToShares';
 import { useDemoContext } from '../../context/demoContext';
+import { WASM_STATUS } from '../../wasm';
 
 export default function Recover() {
    
@@ -12,22 +13,42 @@ export default function Recover() {
         recoverShares: shares, 
         setRecoverShares: setShares, 
         removeShareFromRecovery,
-        addEmpryShare    
+        addEmpryShare,
+        wasm
     } = useDemoContext();
 
     const [threshold, setThreshold] = useState(5);
     const [keys, setKeys] = useState({
-        error: 'Error message will be shown like this',
-        spendingKey: 'd3a5d55fe7f4c66bd386b7f06d371ef7834b2f46bda5c3aa2ca9d94af588aa07',
-        viewingKey: '02ca73421efadad1c52bdd3c29df9a67afc180bcd106a5faf10ed5c87cf110c4',
+        error: '',
+        spendingKey: '',
+        viewingKey: '',
     });
 
     const handleThreasholdChange = (e) => {
         setThreshold(e.target.value);
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        if (wasm.status === WASM_STATUS.READY) {
+            try {
+                const goShares = shares.map(({share: x, spendingKey: skEval, viewingKey: vkEval}) => ({x, skEval, vkEval}));
+                const keys = await wasm.fn.recover(parseInt(threshold), goShares);
+                setKeys({
+                    error: '',
+                    spendingKey: keys.k,
+                    viewingKey: keys.v
+                });
+            } catch (error) {
+                setKeys({
+                    error: error.message,
+                    spendingKey: '',
+                    viewingKey: ''
+                });
+            }
+        } else {
+            alert('WASM not loaded!');
+        }
     }
 
     const handleShareChange = (index) => {
@@ -74,20 +95,28 @@ export default function Recover() {
                     <button type="submit">Recover Keys</button>
                 </div>
             </form>
-            <div className={styles.recovered_keys}>
-                <h3>Recovered keys:</h3>
-                <form className={styles.form} onSubmit={e => e.preventDefault()}>
-                    <div>
-                        <label htmlFor="spendingKey">Spending key:</label>
-                        <input type="text" id="spendingKey" name="spendingKey" value={keys.spendingKey} readOnly />
+            {
+                !!(keys.spendingKey || keys.viewingKey) && (
+                    <div className={styles.recovered_keys}>
+                        <h3>Recovered keys:</h3>
+                        <form className={styles.form} onSubmit={e => e.preventDefault()}>
+                            <div>
+                                <label htmlFor="spendingKey">Spending key:</label>
+                                <input type="text" id="spendingKey" name="spendingKey" value={keys.spendingKey} readOnly />
+                            </div>
+                            <div>
+                                <label htmlFor="viewingKey">Viewing key:</label>
+                                <input type="text" id="viewingKey" name="viewingKey" value={keys.viewingKey} readOnly />
+                            </div>
+                        </form>
                     </div>
-                    <div>
-                        <label htmlFor="viewingKey">Viewing key:</label>
-                        <input type="text" id="viewingKey" name="viewingKey" value={keys.viewingKey} readOnly />
-                    </div>
-                </form>
-                <p className={styles.error}>{keys.error}</p>
-            </div>
+                )
+            }
+            {
+                !!keys.error && (    
+                    <p className={styles.error}>{keys.error}</p>
+                )
+            }
             {
                 shares.length > 0 && (
                     <div>

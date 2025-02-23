@@ -7,10 +7,17 @@ import sharesToZip from '../../utils/sharesToZip';
 import upload from '../../utils/upload';
 import parseSplitDataFile from '../../utils/parseSplitDataFile';
 import { useDemoContext } from '../../context/demoContext';
+import { WASM_STATUS } from '../../wasm';
+import randomInt from '../../utils/randomInt';
 
 export default function Split() {
     
-    const {splitShares: shares, setSplitShares: setShares, moveShareToRecovery} = useDemoContext();
+    const {
+        splitShares: shares, 
+        setSplitShares: setShares, 
+        moveShareToRecovery,
+        wasm
+    } = useDemoContext();
 
     const [formData, setFormData] = useState({
         spendingKey: '',
@@ -26,9 +33,6 @@ export default function Split() {
         });
     }
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-    }
 
     function exportCSV() {
         const file = sharesToCSV(shares);
@@ -60,6 +64,46 @@ export default function Split() {
         }
     }
 
+    async function generateRandomParams() {
+        if (wasm.status === WASM_STATUS.READY) {
+            try {
+                const keys = await wasm.fn.genRandomKeys();
+                const totalShares = randomInt(7, 15);
+                const threshold = randomInt(Math.ceil(totalShares / 2.0), totalShares);
+                setFormData({
+                    threshold,
+                    totalShares,
+                    spendingKey: keys.k,
+                    viewingKey: keys.v
+                });
+            } catch (error) {
+                console.error(error);
+                alert('An error occurred while generating the keys');
+            }
+        } else {
+            alert('WASM not loaded!');
+        }
+    }
+
+    async function handleSubmit(e) {
+        e.preventDefault();
+        if (wasm.status === WASM_STATUS.READY) {
+            try {
+                const shares = await wasm.fn.split(formData.threshold, formData.totalShares, formData.spendingKey, formData.viewingKey);
+                setShares(shares.map(({x, skEval, vkEval}) => ({
+                    share: x,
+                    spendingKey: skEval,
+                    viewingKey: vkEval
+                })));
+            } catch (error) {
+                console.error(error);
+                alert('An error occurred while generating the shares');
+            }
+        } else {
+            alert('WASM not loaded!');
+        }
+    }
+
     return (
         <div className={styles.container}>
             <h2>Generate Shares</h2>
@@ -81,7 +125,7 @@ export default function Split() {
                     <input type="number" id="totalShares" name="totalShares" value={formData.totalShares} min={1} max={10000} onChange={handleChange} />
                 </div>
                 <div className={styles.buttons_container}>
-                    <button type="button">Generate Random</button>
+                    <button type="button" onClick={generateRandomParams}>Generate Random</button>
                     <button type="button" onClick={importData}>Import Data</button>
                     <button type="submit">Generate Shares</button>
                 </div>

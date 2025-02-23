@@ -89,7 +89,7 @@
 .recovered_keys h3 {
     margin-bottom: 1rem;
 }
-.recovered_keys .error {
+.error {
     color: #ff0000;
     font-weight: bold;
     margin: 1rem 0;
