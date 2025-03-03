@@ -1,14 +1,13 @@
 import downloadFile from '../../utils/download';
-import shareToTxt from '../../utils/shareToTxt';
+import shareToJson from '../../utils/shareToJson';
 import styles from './share.module.css';
 
 export default function Share({share, index, onMove}) {
 
     function downloadTxt() {
-        const file = shareToTxt(share, index);
+        const file = shareToJson(share);
         const url = URL.createObjectURL(file);
-        
-        downloadFile(url, `share_${String(index + 1).padStart(2, "0")}.txt`);
+        downloadFile(url, `share_${String(index + 1).padStart(2, "0")}.json`);
         URL.revokeObjectURL(url); // Clean up the URL object
     }
 
@@ -27,7 +26,7 @@ export default function Share({share, index, onMove}) {
                 <input type="text" id='vk' name='vk' value={share.viewingKey} readOnly />
             </div>
             <div className={styles.buttons_container}>
-                <button type="button" onClick={downloadTxt}>Download .txt</button>
+                <button type="button" onClick={downloadTxt}>Download .json</button>
                 <button type="button" onClick={onMove}>Add to recovery</button>
             </div>
         </div>

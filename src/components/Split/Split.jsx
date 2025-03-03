@@ -8,7 +8,6 @@ import upload from '../../utils/upload';
 import parseSplitDataFile from '../../utils/parseSplitDataFile';
 import { useDemoContext } from '../../context/demoContext';
 import { WASM_STATUS } from '../../wasm';
-import randomInt from '../../utils/randomInt';
 
 export default function Split() {
     
@@ -68,11 +67,12 @@ export default function Split() {
         if (wasm.status === WASM_STATUS.READY) {
             try {
                 const keys = await wasm.fn.genRandomKeys();
-                const totalShares = randomInt(7, 15);
-                const threshold = randomInt(Math.ceil(totalShares / 2.0), totalShares);
+                // const totalShares = randomInt(7, 15);
+                // const threshold = randomInt(Math.ceil(totalShares / 2.0), totalShares);
                 setFormData({
-                    threshold,
-                    totalShares,
+                    // threshold,
+                    // totalShares,
+                    ...formData,
                     spendingKey: keys.k,
                     viewingKey: keys.v
                 });
@@ -89,7 +89,12 @@ export default function Split() {
         e.preventDefault();
         if (wasm.status === WASM_STATUS.READY) {
             try {
-                const shares = await wasm.fn.split(formData.threshold, formData.totalShares, formData.spendingKey, formData.viewingKey);
+                const shares = await wasm.fn.split(
+                    Number(formData.threshold),
+                    Number(formData.totalShares),
+                    formData.spendingKey,
+                    formData.viewingKey
+                );
                 setShares(shares.map(({x, skEval, vkEval}) => ({
                     share: x,
                     spendingKey: skEval,
@@ -118,11 +123,11 @@ export default function Split() {
                 </div>
                 <div>
                     <label htmlFor="threshold">Threshold:</label>
-                    <input type="number" id="threshold" name="threshold" value={formData.threshold} min={1} max={10000} onChange={handleChange} />
+                    <input type="number" id="threshold" name="threshold" value={formData.threshold} min={1} max={30} onChange={handleChange} />
                 </div>
                 <div>
                     <label htmlFor="totalShares">Total shares:</label>
-                    <input type="number" id="totalShares" name="totalShares" value={formData.totalShares} min={1} max={10000} onChange={handleChange} />
+                    <input type="number" id="totalShares" name="totalShares" value={formData.totalShares} min={1} max={30} onChange={handleChange} />
                 </div>
                 <div className={styles.buttons_container}>
                     <button type="button" onClick={generateRandomParams}>Generate Random</button>
